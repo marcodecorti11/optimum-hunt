@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Optimum Hunt</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+/* Layout: one app, two faces. Projector view = map left, controls right; phone view = one column card. Palette and type follow the DoE talk deck. */
+:root{
+  --bg:#FDFCF9; --surface:#F7F4EC; --raised:#FFFFFF; --ink:#0E3B34; --text:#4B5450; --muted:#6B746F;
+  --green:#2F6B5F; --accent:#C4763A; --accent-ink:#A5561F; --rule:#D9D2C1; --rule-strong:#0E3B34;
+  --good:#2F6B5F; --bad:#B4462F; --on-ink:#F7F4EC;
+  --c0:#F1ECDF; --c1:#8DB5A5; --c2:#0E3B34; --plot:#F7F4EC;
+  --serif:Georgia,"Times New Roman",serif; --sans:Lato,"Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1A17; --surface:#15251F; --raised:#1A2E27; --ink:#E6EFEA; --text:#C3CEC8; --muted:#8C9C95;
+  --green:#82BBA8; --accent:#E2945C; --accent-ink:#F0A877; --rule:#2B423A; --rule-strong:#C3CEC8;
+  --good:#82BBA8; --bad:#E58A72; --on-ink:#0E1A17;
+  --c0:#1B2D27; --c1:#3E7A67; --c2:#C9EBDC; --plot:#15251F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1A17; --surface:#15251F; --raised:#1A2E27; --ink:#E6EFEA; --text:#C3CEC8; --muted:#8C9C95;
+  --green:#82BBA8; --accent:#E2945C; --accent-ink:#F0A877; --rule:#2B423A; --rule-strong:#C3CEC8;
+  --good:#82BBA8; --bad:#E58A72; --on-ink:#0E1A17;
+  --c0:#1B2D27; --c1:#3E7A67; --c2:#C9EBDC; --plot:#15251F; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--serif);font-weight:400;color:var(--ink);margin:0;text-wrap:balance;line-height:1.15}
+p{margin:0}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:20px;padding-block:16px 32px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:6px 14px;border-bottom:2px solid var(--rule-strong)}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0}
+.brand b{font-family:var(--serif);font-weight:400;font-size:22px;color:var(--ink)}
+.brand span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700}
+.tabs{display:flex;gap:4px;padding:4px;background:var(--surface);border-radius:999px}
+.tab{border:0;background:transparent;padding:8px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer}
+.tab{white-space:nowrap}
+@media (max-width:560px){.tabs{width:100%}.tab{flex:1;padding:6px 8px;font-size:13px}}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--surface);font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.chip.live .dot{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 25%,transparent)}
+.switch{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.switch:hover{color:var(--ink);border-color:var(--ink)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--ink);color:var(--on-ink);text-align:center}
+.btn:hover{filter:brightness(1.12)}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.accent{background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid currentColor}
+.btn.block{width:100%}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* stage (projector) */
+.stage-head{display:flex;flex-direction:column;gap:6px;max-width:70ch}
+.eyebrow{font-size:13px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--accent-ink)}
+.stage-head h1{font-size:clamp(30px,3.4vw,52px)}
+.stage-head p{font-size:clamp(16px,1.35vw,21px)}
+.stage-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:900px){.stage-grid{grid-template-columns:minmax(0,1fr)}}
+.mapbox{display:flex;flex-direction:column;gap:10px;min-width:0}
+canvas.map{width:100%;display:block;border-radius:var(--radius);touch-action:manipulation}
+canvas.map.clickable{cursor:crosshair}
+.legend{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.ramp{width:160px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--c0),var(--c1),var(--c2))}
+.hint{font-size:14px;color:var(--muted)}
+.side{display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel{background:var(--surface);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h3{font-size:22px}
+.label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--green)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row > .btn{flex:1 1 auto}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--mono);font-weight:500;font-size:34px;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:13px;color:var(--muted)}
+.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.board li{display:grid;grid-template-columns:2em minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--rule)}
+.board li:last-child{border-bottom:0}
+.board .rk{font-family:var(--mono);color:var(--muted)}
+.board .nm{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .nm small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.board .vl{font-family:var(--mono);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-style:italic}
+.qr{background:#fff;border-radius:10px;padding:10px;width:min(240px,100%);aspect-ratio:1;display:grid;place-items:center}
+.qr svg{width:100%;height:100%}
+.lobby{align-items:flex-start}
+.lobby .qr{width:min(380px,100%)}
+.lobby h2{font-size:clamp(26px,2.4vw,38px)}
+.lobby .link{font-size:clamp(14px,1.2vw,18px)}
+.link{font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--ink);user-select:all}
+.field{display:flex;flex-direction:column;gap:6px}
+.field input{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;background:var(--raised);font-family:var(--mono);font-size:13px;min-width:0}
+.names{display:flex;flex-wrap:wrap;gap:6px}
+.names span{background:var(--raised);border:1px solid var(--rule);border-radius:999px;padding:4px 10px;font-size:14px;color:var(--ink)}
+.toggles{display:flex;flex-direction:column;gap:8px}
+.tog{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:10px;cursor:pointer;font-size:15px;color:var(--ink)}
+.tog input{width:18px;height:18px;accent-color:var(--ink)}
+.sw{width:22px;height:4px;border-radius:2px}
+table.cmp{width:100%;border-collapse:collapse;font-size:15px}
+table.cmp th{text-align:left;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:6px 4px;border-bottom:1px solid var(--rule)}
+table.cmp td{padding:8px 4px;border-bottom:1px solid var(--rule);vertical-align:baseline}
+table.cmp td.n{font-family:var(--mono);text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cmp tr.hl td{color:var(--ink);font-weight:700}
+
+/* quiz projector */
+.qstage{display:flex;flex-direction:column;gap:24px}
+.qtext{font-family:var(--serif);font-size:clamp(26px,3vw,46px);color:var(--ink);line-height:1.2;max-width:34ch;text-wrap:balance}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:700px){.opts{grid-template-columns:minmax(0,1fr)}}
+.opt{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:18px 20px;border-radius:var(--radius);background:var(--surface);border:2px solid transparent;overflow:hidden;font-size:clamp(17px,1.4vw,22px);color:var(--ink);text-align:left}
+.opt .lt{font-family:var(--mono);font-weight:600;width:1.8em;height:1.8em;border-radius:50%;display:grid;place-items:center;background:var(--raised);color:var(--ink);font-size:.85em}
+.opt .bar{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--c1) 35%,transparent);z-index:0;transition:width .6s ease}
+.opt > *:not(.bar){position:relative;z-index:1}
+.opt .ct{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.opt.correct{border-color:var(--good)}
+.opt.correct .lt{background:var(--good);color:var(--on-ink)}
+.opt.wrong{opacity:.55}
+.explain{background:var(--surface);border-left:4px solid var(--good);border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;font-size:clamp(16px,1.25vw,20px);max-width:80ch;color:var(--ink)}
+.qbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.qbar .sp{margin-right:auto}
+.progress{display:flex;gap:6px}
+.progress i{width:28px;height:6px;border-radius:3px;background:var(--rule)}
+.progress i.on{background:var(--ink)}
+
+/* phone card */
+.phone{max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.card h2{font-size:26px}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--rule)}
+.steps i.done{background:var(--accent)}
+.steps i.now{background:var(--ink)}
+.slider{display:flex;flex-direction:column;gap:8px}
+.slider .rd{display:flex;justify-content:space-between;align-items:baseline}
+.slider .rd b{font-family:var(--mono);font-size:30px;color:var(--ink);font-weight:500}
+.slider input[type=range]{width:100%;accent-color:var(--accent);height:32px}
+.fixed{font-size:15px;color:var(--ink);background:var(--raised);border-radius:8px;padding:8px 12px}
+.runs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.runs li{display:grid;grid-template-columns:1.6em minmax(0,1fr) auto;gap:10px;align-items:baseline;background:var(--raised);border-radius:8px;padding:8px 12px}
+.runs .i{font-family:var(--mono);color:var(--muted);font-size:13px}
+.runs .c{font-size:14px}
+.runs .v{font-family:var(--mono);font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+.runs li.best{outline:2px solid var(--accent)}
+.big{display:flex;align-items:baseline;gap:10px}
+.big b{font-family:var(--mono);font-size:44px;font-weight:500;color:var(--ink);line-height:1}
+.pick{display:grid;gap:10px}
+.pick .opt{cursor:pointer;width:100%;background:var(--raised);border-color:var(--rule)}
+.pick .opt[aria-pressed="true"]{border-color:var(--ink);background:var(--raised)}
+.pick .opt:disabled{cursor:default}
+.result{font-weight:700}
+.result.ok{color:var(--good)}
+.result.no{color:var(--bad)}
+.wait{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}.opt .bar{transition:none}}
+.banner{background:var(--surface);border-left:4px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--on-ink);padding:10px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:20}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span>Paradisi Research · DoE live</span><b>Optimum Hunt</b></div>
+    <div class="tabs" id="tabs" role="group" aria-label="Exercise"></div>
+    <span class="chip" id="status"><i class="dot"></i><span>Connecting…</span></span>
+    <button class="switch" id="viewSwitch" hidden></button>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const JOIN_DEFAULT = /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/index\.html$/,"") : "";  /* the QR points at wherever this page is hosted */
+const E=0.045;               /* breathing room so runs on the edge of the box stay visible */
+const OFAT_T=115, OFAT_RUNS=3, FREE_RUNS=6, ENZ_RUNS=4;
+
+/* ---------- two toy reactions ("worlds") ---------- */
+function truthAcid(x,y){ const s=(x+y)/2, d=x-y; return 8 + 6*x + 76*Math.exp(-d*d/(2*0.12*0.12))*Math.exp(-((s-0.85)**2)/(2*0.3*0.3)); }
+/* enzyme in flow: too short = not converted; too hot or too long = enzyme loses activity. Best T falls as residence time grows. */
+function truthEnz(x,y){ return 4 + 84*Math.exp(-((y-(0.95-0.75*x))**2)/(2*0.13*0.13))*Math.exp(-((x-0.7)**2)/(2*0.3*0.3)); }
+const W1={key:"acid",ls:0.2,truth:truthAcid,x0:0.1,x1:3.0,xs:0.1,y0:100,y1:160,ys:5,xName:"Acid (eq)",yName:"Temperature (°C)",
+  xTicks:[0.1,0.5,1.0,1.5,2.0,2.5,3.0],yTicks:[100,110,120,130,140,150,160],xt:v=>v.toFixed(1),fx:v=>v.toFixed(1)+" eq",fy:v=>Math.round(v)+" °C"};
+const W2={key:"enz",ls:0.15,truth:truthEnz,x0:1,x1:30,xs:1,y0:20,y1:70,ys:5,xName:"Residence time (min)",yName:"Temperature (°C)",
+  xTicks:[1,5,10,15,20,25,30],yTicks:[20,30,40,50,60,70],xt:v=>String(v),fx:v=>Math.round(v)+" min",fy:v=>Math.round(v)+" °C"};
+const ux=(W,x)=>W.x0+(W.x1-W.x0)*x, uy=(W,y)=>W.y0+(W.y1-W.y0)*y;      // coded -> units
+const cx=(W,a)=>(a-W.x0)/(W.x1-W.x0), cy=(W,t)=>(t-W.y0)/(W.y1-W.y0);  // units -> coded
+const fX=(W,x)=>W.fx(ux(W,x)), fY=(W,y)=>W.fy(uy(W,y));
+const clamp01=v=>Math.min(1,Math.max(0,v));
+const snapX=(W,x)=>cx(W,Math.round(ux(W,clamp01(x))/W.xs)*W.xs), snapY=(W,y)=>cy(W,Math.round(uy(W,clamp01(y))/W.ys)*W.ys);
+function measure(W,x,y){ let n=0; for(let i=0;i<6;i++) n+=Math.random(); n=(n-3)*Math.SQRT2; return Math.max(0, Math.round((W.truth(x,y)+1.5*n)*10)/10); }
+[W1,W2].forEach(W=>{ let b={x:0,y:0,v:-1}; for(let i=0;i<=300;i++) for(let j=0;j<=200;j++){ const x=i/300,y=j/200,v=W.truth(x,y); if(v>b.v) b={x,y,v}; } W.opt=b;
+  W.grid=[]; for(let a=W.x0; a<=W.x1+1e-9; a+=W.xs) for(let t=W.y0; t<=W.y1+1e-9; t+=W.ys) W.grid.push({x:cx(W,Math.round(a*100)/100),y:cy(W,t)}); });
+const fA=x=>fX(W1,x), fT=y=>fY(W1,y);
+
+/* ---------- Gaussian process + expected improvement ---------- */
+function phi(z){return Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);}
+function Phi(z){const t=1/(1+0.2316419*Math.abs(z));const d=0.3989423*Math.exp(-z*z/2);const p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;}
+function gpFit(P,ls){
+  ls=ls||0.2; const n=P.length, ys=P.map(p=>p.v/100), mu=ys.reduce((a,b)=>a+b,0)/n;
+  const sv=Math.max(0.02, ys.reduce((a,b)=>a+(b-mu)**2,0)/n);
+  const K=(a,b)=>sv*Math.exp(-((a.x-b.x)**2+(a.y-b.y)**2)/(2*ls*ls));
+  const L=P.map(()=>new Array(n).fill(0));
+  for(let i=0;i<n;i++) for(let j=0;j<=i;j++){ let s=K(P[i],P[j])+(i===j?4e-4:0); for(let k=0;k<j;k++) s-=L[i][k]*L[j][k]; L[i][j]= i===j?Math.sqrt(Math.max(s,1e-12)):s/L[j][j]; }
+  const fwd=b=>{const x=[];for(let i=0;i<n;i++){let s=b[i];for(let k=0;k<i;k++)s-=L[i][k]*x[k];x[i]=s/L[i][i];}return x;};
+  const bwd=b=>{const x=[];for(let i=n-1;i>=0;i--){let s=b[i];for(let k=i+1;k<n;k++)s-=L[k][i]*x[k];x[i]=s/L[i][i];}return x;};
+  const alpha=bwd(fwd(ys.map(y=>y-mu)));
+  const f=(x,y)=>{ const q={x,y}, k=P.map(p=>K(p,q)); const m=mu+k.reduce((a,v,i)=>a+v*alpha[i],0); const v=fwd(k); const va=sv-v.reduce((a,b)=>a+b*b,0); return [m, Math.sqrt(Math.max(va,1e-10))]; };
+  f.sd0=Math.sqrt(sv); return f;
+}
+function suggest(W,P){
+  const gp=gpFit(P,W.ls), best=Math.max(...P.map(p=>p.v))/100; let pick=null, ei=-1;
+  for(const c of W.grid){ if(P.some(p=>Math.abs(p.x-c.x)<1e-6&&Math.abs(p.y-c.y)<1e-6)) continue;
+    const [m,s]=gp(c.x,c.y); const z=(m-best-0.01)/s, e=(m-best-0.01)*Phi(z)+s*phi(z); if(e>ei){ei=e;pick=c;} }
+  return pick;
+}
+function bestOf(p){ return p.reduce((b,r)=>r.v>b.v?r:b, p[0]); }
+
+/* ---------- reference strategies (noise-free) ---------- */
+const REF=(()=>{
+  const at=(W,a,t)=>{ const x=cx(W,a), y=cy(W,t); return {x,y,v:W.truth(x,y)}; };
+  const s1=[0.5,1.0,1.5,2.0,2.5].map(a=>at(W1,a,OFAT_T)), b1=bestOf(s1);
+  const s2=[100,130,145,160].map(t=>at(W1,ux(W1,b1.x),t));
+  const fact=[at(W1,0.1,100),at(W1,3.0,100),at(W1,0.1,160),at(W1,3.0,160),at(W1,1.55,130)];
+  const bo=[...fact]; for(let k=0;k<5;k++){ const p=suggest(W1,bo); bo.push({...p,v:W1.truth(p.x,p.y)}); }
+  const start=[at(W2,1,20),at(W2,30,20),at(W2,1,70),at(W2,30,70),at(W2,15.5,45)].map(p=>({...p,v:Math.round(p.v*10)/10}));
+  const bo2=[...start]; for(let k=0;k<ENZ_RUNS;k++){ const p=suggest(W2,bo2); bo2.push({...p,v:W2.truth(p.x,p.y)}); }
+  return {ofat:[...s1,...s2], ofatPath:[...s1,b1,...s2], fact, bo:bo.slice(5), start, bo2:bo2.slice(5)};
+})();
+
+/* ---------- quiz ---------- */
+const QUIZ = [
+ {q:"One factor at a time stalled near 25 % yield, but the optimum is near 89 %. Why did it miss?",
+  o:["Too few runs","The best acid amount depends on the temperature","Measurement noise","The ranges were too narrow"],c:1,
+  e:"The high-yield region is a diagonal ridge: acid and temperature only pay off together. Holding T at 115 °C, the best acid is low, so OFAT never climbs the ridge. That is an interaction."},
+ {q:"A full 2³ factorial has how many runs, before centre points?",
+  o:["6","8","9","27"],c:1,e:"Two levels for each of three factors: 2 × 2 × 2 = 8 corners of the cube."},
+ {q:"The 8 corners average 9.5 %. Three centre runs average 12.1 % and agree within 0.5 points. What does this show?",
+  o:["The model is wrong","The surface is curved","Two factors interact","A bad batch of acid"],c:1,
+  e:"A flat surface would put the centre at the average of the corners. The centre sits 2.6 points above it, far more than the replicate scatter: the surface bends."},
+ {q:"In an interaction plot the two lines are clearly not parallel. What does that mean?",
+  o:["Both factors matter","The effect of one factor depends on the level of the other","The data are noisy","One factor has no effect"],c:1,
+  e:"Parallel lines mean each factor acts the same whatever the other does. Diverging lines mean the factors work together."},
+ {q:"A model fitted on 25–50 mM predicts 70 % at 100 mM. That prediction is…",
+  o:["Interpolation: trust it","Extrapolation: a hypothesis to test","Simply wrong","Fine once you add centre points"],c:1,
+  e:"Outside the sampled box the model is guessing. Run the experiment before you believe it."},
+ {q:"Where is a Gaussian process most unsure?",
+  o:["At the best point so far","Exactly at each experiment","Far from any experiment","Everywhere equally"],c:2,
+  e:"The band pinches at every run and widens in the gaps between them. That width is what the optimizer uses to explore."},
+ {q:"Expected improvement picks a point where the best guess is mediocre but the band is very wide. That is…",
+  o:["Exploitation","Exploration","A bug","Replication"],c:1,
+  e:"A wide band means something better might hide there. Choosing it is exploration; choosing where the best guess is high is exploitation."},
+ {q:"All three centre replicates ran on the same day. What is the risk?",
+  o:["None","The noise is underestimated, so effects look more significant than they are","The centre gets too much weight","The factorial is no longer balanced"],c:1,
+  e:"Same-day replicates miss day-to-day variation. The noise estimate shrinks and p-values look better than they should. Spread replicates over days and stocks."}
+];
+const LET=["A","B","C","D"];
+
+/* ---------- app state ---------- */
+const app = { mode:"loading", db:null, user:null, uid:null, canEdit:false,
+  state:null, stateMissing:false, hunt:{}, quiz:{}, names:{}, viewAs:null,
+  sel:null, slider:{a:1.0,t:130}, overlay:{runs:true,ofat:false,fact:false,bo:false}, overlay2:{runs:true,start:true,bo:false},
+  confirmReset:false, joined:null, lastKey:"" };
+const newId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const defaultState = () => ({session:newId(), tab:"hunt", hunt:{phase:"lobby"}, enz:{phase:"intro"}, quiz:{q:-1,reveal:false}, joinUrl:JOIN_DEFAULT});
+const clone = o => JSON.parse(JSON.stringify(o));
+function role(){ if(app.viewAs) return app.viewAs; if(app.mode==="live") return app.canEdit?"presenter":"player"; if(app.mode==="solo") return app.narrow?"player":"presenter"; return "presenter"; }
+const LS="optimum-hunt-v2";
+function saveLocal(){ if(app.mode!=="solo") return; try{ localStorage.setItem(LS, JSON.stringify({state:app.state,me:app.hunt.me||null,room:app.hunt.room||null,quiz:app.quiz.me||null})); }catch(e){} }
+function loadLocal(){ try{ const d=JSON.parse(localStorage.getItem(LS)||"null"); if(d&&d.state&&d.state.session){ app.state=d.state; if(d.me) app.hunt.me=d.me; if(d.room) app.hunt.room=d.room; if(d.quiz) app.quiz.me=d.quiz; } }catch(e){} }
+function S(){ const s=app.state || defaultState(); if(!s.enz) s.enz={phase:"intro"}; return s; }
+function sess(){ return S().session; }
+function huntDoc(id){ const d=app.hunt[id]; return d && d.session===sess() ? {ofat:d.ofat||[],free:d.free||[],enz:d.enz||[],guess:d.guess||null} : {ofat:[],free:[],enz:[],guess:null}; }
+function quizDoc(id){ const d=app.quiz[id]; return d && d.session===sess() ? {a:d.a||{}} : {a:{}}; }
+function players(){ return Object.keys(app.hunt).filter(id=>id!=="room" && app.hunt[id] && app.hunt[id].session===sess()); }
+function quizPlayers(){ return Object.keys(app.quiz).filter(id=>app.quiz[id] && app.quiz[id].session===sess()); }
+
+/* ---------- persistence ---------- */
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,4000); }
+function dbErr(e){ const c=e&&e.code; if(c==="quota_exceeded") toast("The game store is full. Ask the presenter to reset."); else if(c==="resource_exhausted") toast("Too many clicks at once. Wait a second and try again."); else toast("Could not save. Check your connection and try again."); }
+function setState(fn){ const s=clone(S()); fn(s); app.state=s; saveLocal(); render(); if(app.mode==="live") app.db.doc("live/state").set(s).catch(dbErr); }
+function saveHunt(id,d){ const body={session:sess(),ofat:d.ofat,free:d.free,enz:d.enz||[],guess:d.guess||null}; app.hunt={...app.hunt,[id]:body}; saveLocal(); render(); if(app.mode==="live") app.db.doc("hunt/"+id).set(body).catch(dbErr); }
+function saveQuiz(id,d){ const body={session:sess(),a:d.a}; app.quiz={...app.quiz,[id]:body}; saveLocal(); render(); if(app.mode==="live") app.db.doc("quiz/"+id).set(body).catch(dbErr); }
+function reconcileJoin(){
+  if(app.mode!=="live"||!app.uid||!app.state||role()!=="player") return;
+  const d=app.hunt[app.uid];
+  if((!d || d.session!==sess()) && app.joined!==sess()){ app.joined=sess(); saveHunt(app.uid,{ofat:[],free:[],enz:[]}); }
+}
+
+/* ---------- names ---------- */
+function ensureNames(ids){
+  if(!app.user||!ids.length) return;
+  const need=ids.filter(id=>id!=="room" && !(id in app.names)); if(!need.length) return;
+  need.forEach(id=>app.names[id]="");
+  app.user.profiles(need).then(ps=>{ let ch=false; for(const id of need){ const n=(ps[id]&&ps[id].name)||""; if(n!==app.names[id]){app.names[id]=n;ch=true;} } if(ch) render(true); });
+}
+function nameOf(id){
+  if(id==="room") return "The room (this screen)";
+  if(id==="me") return "You (this device)";
+  if(app.uid && id===app.uid && role()==="player") return "You";
+  const n=app.names[id]; if(n) return n.split(/\s+/)[0];
+  const all=[...new Set([...players(),...quizPlayers()])].sort(); return "Player "+(all.indexOf(id)+1);
+}
+
+/* ---------- map drawing ---------- */
+const heatCache={};
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hex(c){ c=c.replace("#",""); if(c.length===3) c=c.split("").map(s=>s+s).join(""); return [0,2,4].map(i=>parseInt(c.slice(i,i+2),16)); }
+function ramp(v){ const t=clamp01(v/90); const a=hex(css("--c0")),b=hex(css("--c1")),c=hex(css("--c2")); const [p,q,u]=t<.5?[a,b,t*2]:[b,c,(t-.5)*2]; return p.map((x,i)=>Math.round(x+(q[i]-x)*u)); }
+function rgb(v){ const c=ramp(v); return `rgb(${c[0]},${c[1]},${c[2]})`; }
+function heatImage(W){
+  const key=W.key+css("--c0")+css("--c1")+css("--c2"); if(heatCache[key]) return heatCache[key];
+  const w=174,h=96,cv=document.createElement("canvas"); cv.width=w; cv.height=h; const c=cv.getContext("2d"), im=c.createImageData(w,h);
+  for(let j=0;j<h;j++) for(let i=0;i<w;i++){ const v=W.truth(i/(w-1)*(1+2*E)-E,(1-j/(h-1))*(1+2*E)-E), col=ramp(v), k=(j*w+i)*4; im.data[k]=col[0];im.data[k+1]=col[1];im.data[k+2]=col[2];im.data[k+3]=255; }
+  c.putImageData(im,0,0); heatCache[key]=cv; return cv;
+}
+const modelCache={};
+function modelImage(W,P){
+  const key=W.key+JSON.stringify(P.map(p=>[p.x,p.y,p.v]))+css("--c0")+css("--c2")+css("--plot");
+  if(modelCache[key]) return modelCache[key];
+  const gp=gpFit(P,W.ls), w=90,h=60, cv=document.createElement("canvas"); cv.width=w; cv.height=h; const c=cv.getContext("2d"), im=c.createImageData(w,h), bg=hex(css("--plot"));
+  for(let j=0;j<h;j++) for(let i=0;i<w;i++){ const x=i/(w-1)*(1+2*E)-E, y=(1-j/(h-1))*(1+2*E)-E; const [m,s]=gp(x,y);
+    const sure=clamp01(1-s/gp.sd0*1.1)**0.8, col=ramp(m*100), k=(j*w+i)*4;
+    for(let q=0;q<3;q++) im.data[k+q]=Math.round(bg[q]+(col[q]-bg[q])*(0.12+0.88*sure)); im.data[k+3]=255; }
+  c.putImageData(im,0,0); const keys=Object.keys(modelCache); if(keys.length>40) delete modelCache[keys[0]]; modelCache[key]=cv; return cv;
+}
+function drawMap(cv,o){
+  const W=o.world||W1;
+  const dpr=window.devicePixelRatio||1, CW=Math.max(260,cv.clientWidth), H=Math.round(CW*(o.ratio||0.62));
+  cv.style.height=H+"px"; cv.width=Math.round(CW*dpr); cv.height=Math.round(H*dpr);
+  const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0);
+  const fs=Math.max(11,Math.min(17,CW/52)), m={l:fs*4.2,r:fs*1.2,t:fs*1.1,b:fs*3.4}, pw=CW-m.l-m.r, ph=H-m.t-m.b;
+  const X=x=>m.l+(x+E)/(1+2*E)*pw, Y=y=>m.t+(1-(y+E)/(1+2*E))*ph; cv._geo={m,pw,ph,W};
+  const FL=m.l, FR=m.l+pw, FT=m.t, FB=m.t+ph;
+  const ink=css("--ink"), muted=css("--muted"), rule=css("--rule"), acc=css("--accent"), font=css("--sans");
+  c.clearRect(0,0,CW,H); c.imageSmoothingEnabled=true;
+  if(o.surface) c.drawImage(heatImage(W),FL,FT,pw,ph);
+  else if(o.model && o.model.length) c.drawImage(modelImage(W,o.model),FL,FT,pw,ph);
+  else { c.fillStyle=css("--plot"); c.fillRect(FL,FT,pw,ph); }
+  const tint=o.surface||(o.model&&o.model.length);
+  c.lineWidth=1; c.font=`${fs}px ${font}`; c.fillStyle=muted;
+  W.xTicks.forEach(a=>{ const x=X(cx(W,a)); c.strokeStyle=tint?"rgba(255,255,255,.2)":rule; c.beginPath(); c.moveTo(x,FB); c.lineTo(x,FT); c.stroke(); c.textAlign="center"; c.textBaseline="top"; c.fillText(W.xt(a),x,FB+fs*0.45); });
+  W.yTicks.forEach(t=>{ const y=Y(cy(W,t)); c.strokeStyle=tint?"rgba(255,255,255,.2)":rule; c.beginPath(); c.moveTo(FL,y); c.lineTo(FR,y); c.stroke(); c.textAlign="right"; c.textBaseline="middle"; c.fillText(String(t),FL-fs*0.5,y); });
+  c.fillStyle=ink; c.font=`700 ${fs}px ${font}`; c.textAlign="center"; c.textBaseline="bottom"; c.fillText(W.xName,X(0.5),H-2);
+  c.save(); c.translate(fs*1.1,Y(0.5)); c.rotate(-Math.PI/2); c.textBaseline="middle"; c.fillText(W.yName,0,0); c.restore();
+  c.strokeStyle=ink; c.lineWidth=1.5; c.strokeRect(FL,FT,pw,ph);
+  (o.lines||[]).forEach(L=>{ c.save(); c.setLineDash([fs*0.6,fs*0.45]); c.strokeStyle=acc; c.lineWidth=2.5; c.beginPath();
+    if(L.y!=null){c.moveTo(FL,Y(L.y));c.lineTo(FR,Y(L.y));} else {c.moveTo(X(L.x),FB);c.lineTo(X(L.x),FT);} c.stroke(); c.restore();
+    if(L.label){ c.font=`700 ${fs*0.9}px ${font}`; c.fillStyle=acc; c.textAlign="left"; c.textBaseline="bottom"; if(L.y!=null) c.fillText(L.label,FL+6,Y(L.y)-4); else { c.save(); c.translate(X(L.x)-5,FT+6); c.rotate(-Math.PI/2); c.textAlign="right"; c.fillText(L.label,0,0); c.restore(); } } });
+  const tag=(t,px,py,rr)=>{ c.font=`700 ${fs*0.95}px ${css("--mono")}`; c.textBaseline="alphabetic"; c.textAlign="left";
+    const tw=c.measureText(t).width, th=fs*0.95; let x=px+rr, y=py-rr+th*0.35;
+    if(x+tw>CW-2) x=px-rr-tw; if(y-th<2) y=py+rr+th; if(y>H-2) y=py-rr; x=Math.max(2,Math.min(CW-tw-2,x));
+    c.lineWidth=4; c.strokeStyle=css("--bg"); c.strokeText(t,x,y); c.fillStyle=ink; c.fillText(t,x,y); };
+  (o.paths||[]).forEach(P=>{ c.save(); c.strokeStyle=P.color; c.lineWidth=2.5; if(P.dash) c.setLineDash(P.dash); if(P.connect){ c.beginPath(); P.pts.forEach((p,i)=>i?c.lineTo(X(p.x),Y(p.y)):c.moveTo(X(p.x),Y(p.y))); c.stroke(); } c.restore();
+    P.pts.forEach((p,i)=>{ const r=fs*0.62; c.beginPath(); if(P.shape==="sq") c.rect(X(p.x)-r,Y(p.y)-r,2*r,2*r); else if(P.shape==="di"){c.moveTo(X(p.x),Y(p.y)-r*1.3);c.lineTo(X(p.x)+r*1.3,Y(p.y));c.lineTo(X(p.x),Y(p.y)+r*1.3);c.lineTo(X(p.x)-r*1.3,Y(p.y));c.closePath();} else c.arc(X(p.x),Y(p.y),r,0,7);
+      c.fillStyle=P.fill?rgb(p.v):P.color; c.fill(); c.lineWidth=P.fill?2:1.5; c.strokeStyle=P.fill?P.color:css("--bg"); c.stroke();
+      if(P.numbers){ c.fillStyle=css("--bg"); c.font=`700 ${fs*0.75}px ${font}`; c.textAlign="center"; c.textBaseline="middle"; c.fillText(String(i+1),X(p.x),Y(p.y)+0.5); }
+      if(P.labels) tag(p.v.toFixed(0)+"%",X(p.x),Y(p.y),r+4); }); });
+  (o.guesses||[]).forEach(g=>{ const x=X(g.x), y=Y(g.y), r=fs*(g.big?0.95:0.6); c.save(); c.strokeStyle=g.color||acc; c.lineWidth=g.big?3:2;
+    c.beginPath(); c.arc(x,y,r,0,7); c.stroke(); c.beginPath(); c.moveTo(x-r*1.5,y); c.lineTo(x-r*0.4,y); c.moveTo(x+r*0.4,y); c.lineTo(x+r*1.5,y); c.moveTo(x,y-r*1.5); c.lineTo(x,y-r*0.4); c.moveTo(x,y+r*0.4); c.lineTo(x,y+r*1.5); c.stroke(); c.restore();
+    if(g.label) tag(g.label,x,y,r+3); });
+  const runs=o.runs||[], r0=o.big?fs*0.85:fs*0.55;
+  runs.forEach(p=>{ c.beginPath(); c.arc(X(p.x),Y(p.y),p.own?r0*1.25:r0,0,7); c.fillStyle=rgb(p.v); c.fill(); c.lineWidth=p.own?2.5:1.5; c.strokeStyle=p.own?acc:ink; c.stroke(); });
+  if(o.labels) runs.forEach(p=>tag(p.v.toFixed(0)+"%",X(p.x),Y(p.y),(p.own?r0*1.25:r0)+3));
+  if(o.suggest){ const x=X(o.suggest.x), y=Y(o.suggest.y), r=fs*1.15; c.save(); c.strokeStyle=acc; c.lineWidth=3; c.setLineDash([5,4]); c.beginPath(); c.arc(x,y,r,0,7); c.stroke(); c.setLineDash([]);
+    c.beginPath(); c.arc(x,y,3,0,7); c.fillStyle=acc; c.fill(); c.restore(); tag("next?",x,y,r+2); }
+  if(o.sel){ const x=X(o.sel.x), y=Y(o.sel.y); c.save(); c.strokeStyle=acc; c.lineWidth=2; c.setLineDash([4,4]); c.beginPath(); c.moveTo(FL,y); c.lineTo(FR,y); c.moveTo(x,FB); c.lineTo(x,FT); c.stroke(); c.setLineDash([]); c.lineWidth=3; c.beginPath(); c.arc(x,y,fs*0.95,0,7); c.stroke(); c.restore(); }
+  if(o.opt){ const x=X(W.opt.x), y=Y(W.opt.y), r=fs*1.05; c.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*0.45:r; c.lineTo(x+rr*Math.cos(a),y+rr*Math.sin(a)); } c.closePath(); c.fillStyle="#fff"; c.fill(); c.lineWidth=2; c.strokeStyle=acc; c.stroke(); }
+  if(o.watermark){ c.font=`italic ${fs*1.05}px ${font}`; c.fillStyle=muted; c.textAlign="center"; c.textBaseline="middle"; c.fillText(o.watermark,X(0.5),Y(0.5)); }
+}
+function mapPoint(cv,ev){ const g=cv._geo, W=g.W, r=cv.getBoundingClientRect(); const x=(ev.clientX-r.left-g.m.l)/g.pw*(1+2*E)-E, y=(1-(ev.clientY-r.top-g.m.t)/g.ph)*(1+2*E)-E; if(x<-E-0.02||x>1+E+0.02||y<-E-0.02||y>1+E+0.02) return null; return {x:snapX(W,x), y:snapY(W,y)}; }
+
+/* ---------- hunt logic shared by phones and "the room" ---------- */
+function ofatStep(d){ return d.ofat.length<OFAT_RUNS?1:(d.ofat.length<2*OFAT_RUNS?2:3); }
+function ofatBestX(d){ return bestOf(d.ofat.slice(0,OFAT_RUNS)).x; }
+function runOfat(id,x,y){ const d=clone(huntDoc(id)); const st=ofatStep(d); if(st===3) return;
+  if(st===1) y=cy(W1,OFAT_T); else x=ofatBestX(d);
+  d.ofat.push({x,y,v:measure(W1,x,y)}); saveHunt(id,d); }
+function runFree(id,x,y){ const d=clone(huntDoc(id)); if(d.free.length>=FREE_RUNS) return; d.free.push({x,y,v:measure(W1,x,y)}); saveHunt(id,d); }
+function runEnz(id,x,y){ const d=clone(huntDoc(id)); if(d.enz.length>=ENZ_RUNS) return; d.enz.push({x,y,v:measure(W2,x,y)}); saveHunt(id,d); }
+const enzModelRuns=d=>[...REF.start,...d.enz];
+function setGuess(id,p){ const d=clone(huntDoc(id)); d.guess={x:p.x,y:p.y}; saveHunt(id,d); }
+
+/* ---------- small DOM helper ---------- */
+function h(tag,attrs,...kids){ const e=document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){ if(v==null||v===false) continue;
+    if(k==="class") e.className=v; else if(k==="html") e.innerHTML=v; else if(k.startsWith("on")) e.addEventListener(k.slice(2),v); else e.setAttribute(k,v===true?"":v); }
+  for(const c of kids.flat()){ if(c==null||c===false) continue; e.append(c.nodeType?c:document.createTextNode(String(c))); } return e; }
+const pct = v => v.toFixed(1)+" %";
+function median(a){ if(!a.length) return null; const b=[...a].sort((x,y)=>x-y), m=b.length>>1; return b.length%2?b[m]:(b[m-1]+b[m])/2; }
+
+/* ---------- render ---------- */
+let pendingMaps=[];
+function render(force){
+  const r=role(), s=S();
+  const key=JSON.stringify([app.mode,r,s,app.sel,app.overlay,app.overlay2,app.confirmReset,
+    r==="player"?[huntDoc(app.uid),quizDoc(app.uid),players().length]:[app.hunt,app.quiz,app.names]]);
+  if(!force && key===app.lastKey) return; app.lastKey=key;
+  renderTop(); const main=document.getElementById("main"); pendingMaps=[];
+  let view;
+  if(app.mode==="loading") view=h("div",{class:"wait"},h("i",{class:"pulse"}),h("p",{},"Connecting to the game…"));
+  else if(app.mode==="solo" && !app.viewAs && !app.narrow) view=chooser();
+  else if(r==="player") view=playerView();
+  else view= s.tab==="quiz"?presQuiz() : s.tab==="enzyme"?presEnz() : presHunt();
+  main.replaceChildren(view);
+  requestAnimationFrame(()=>pendingMaps.forEach(([cv,o])=>drawMap(cv,o)));
+}
+function chooser(){
+  const pickView=v=>{ app.viewAs=v; try{ localStorage.setItem(LS+"-view",v); }catch(e){} render(true); };
+  return h("section",{class:"phone",style:"max-width:760px"},
+    h("div",{class:"stage-head"},h("span",{class:"eyebrow"},"Design of experiments · live exercise"),h("h1",{},"How are you using this screen?")),
+    h("div",{class:"opts"},
+      h("button",{class:"opt",style:"cursor:pointer;flex-direction:column",onclick:()=>pickView("player")},h("span",{class:"lt"},"1"),h("span",{},h("b",{},"Play"),h("br"),h("small",{class:"hint"},"Three rounds and a quiz, at your own pace."))),
+      h("button",{class:"opt",style:"cursor:pointer",onclick:()=>pickView("presenter")},h("span",{class:"lt"},"2"),h("span",{},h("b",{},"Present on the projector"),h("br"),h("small",{class:"hint"},"QR code, the room's runs and the reveals.")))),
+    h("p",{class:"hint"},"You can switch at any time with the button at the top right."));
+}
+function mapEl(o,onclick){ const cv=h("canvas",{class:"map"+(onclick?" clickable":""),role:"img","aria-label":o.aria||"Map of the two factors"}); if(onclick) cv.addEventListener("click",ev=>{ const p=mapPoint(cv,ev); if(p) onclick(p); }); pendingMaps.push([cv,o]); cv._o=o; return cv; }
+function legend(extra){ return h("div",{class:"legend"}, h("span",{},"Yield"), h("span",{class:"ramp"}), h("span",{},"0 → 90 %"), extra?h("span",{class:"hint"},"· "+extra):null); }
+
+function renderTop(){
+  const s=S(), r=role(), tabs=document.getElementById("tabs"); tabs.replaceChildren();
+  [["hunt","Part 1 · Hunt"],["enzyme","Part 2 · Enzyme"],["quiz","Part 2 · Quiz"]].forEach(([k,l])=>{
+    tabs.append(h("button",{class:"tab","aria-pressed":String(s.tab===k),disabled:r==="player"?true:null,onclick:()=>{ if(r!=="player") setState(x=>x.tab=k); }},l)); });
+  const st=document.getElementById("status");
+  if(app.mode==="live"){ st.className="chip live"; st.lastChild.textContent=`Live · ${players().length} ${players().length===1?"player":"players"}`; }
+  else if(app.mode==="solo"){ st.className="chip"; st.lastChild.textContent= r==="player"?"Playing solo":"This screen only"; }
+  const sw=document.getElementById("viewSwitch");
+  if((app.mode==="live" && app.canEdit) || app.mode==="solo"){ sw.hidden=false;
+    sw.textContent= app.mode==="solo" ? (r==="presenter"?"Play on this device":"Projector view") : (r==="presenter"?"Open the phone view":"Back to presenter view");
+    sw.onclick=()=>{ app.viewAs= r==="presenter"?"player":"presenter"; reconcileJoin(); render(true); }; } else sw.hidden=true;
+}
+function stage(info,left,side){ return h("section",{style:"display:flex;flex-direction:column;gap:22px"},
+  h("div",{class:"stage-head"},h("span",{class:"eyebrow"},info.eye),h("h1",{},info.t),h("p",{},info.p)), h("div",{class:"stage-grid"},left,side)); }
+function navPanel(back,next,nextLabel,nextClass){ return h("div",{class:"panel"},h("span",{class:"label"},"Presenter"),
+  h("div",{class:"row"}, back?h("button",{class:"btn ghost",onclick:back},"Back"):null, h("button",{class:"btn "+(nextClass||"accent"),onclick:next},nextLabel)), resetRow()); }
+
+/* ===== presenter: round 1–2 ===== */
+const PHASES=["lobby","ofat","free","reveal"];
+const PH={
+  lobby:{eye:"Part 1 · A toy reaction",t:"Find the optimum",p:"Two factors: acid, 0.1 to 3.0 eq, and temperature, 100 to 160 °C. The yield map is hidden. Join on your phone, then we hunt in two rounds. Part 2 comes after the Bayesian section."},
+  ofat:{eye:"Part 1 · Round 1 of 2",t:"One factor at a time",p:`Temperature stays at ${OFAT_T} °C while you try ${OFAT_RUNS} acid amounts. Then acid stays at your best while you try ${OFAT_RUNS} temperatures.`},
+  free:{eye:"Part 1 · Round 2 of 2",t:"Free hunt",p:`${FREE_RUNS} runs, anywhere on the map. Use what round 1 taught you.`},
+  reveal:{eye:"Part 1 · The answer",t:"The hidden map",p:"The high yields sit on a diagonal ridge: acid and temperature only pay off together. Switch the strategies on to compare them."}
+};
+function presHunt(){
+  const s=S(), ph=s.hunt.phase, info=PH[ph], idx=PHASES.indexOf(ph);
+  const ids=players(); ensureNames(ids);
+  let left, hint="";
+  if(ph==="lobby") left=joinPanel(ids);
+  else {
+    let mapOpts, click=null;
+    if(ph==="ofat"){ const runs=[]; [...ids,"room"].forEach(id=>huntDoc(id).ofat.forEach(p=>runs.push(p))); const rd=huntDoc("room");
+      const lines=[{y:cy(W1,OFAT_T),label:`Round 1 starts at ${OFAT_T} °C`}]; if(ofatStep(rd)>=2) lines.push({x:ofatBestX(rd),label:"Room: acid fixed"});
+      mapOpts={world:W1,runs,lines,big:true,labels:runs.length<=40,aria:"Everyone's round 1 runs"}; click=p=>runOfat("room",p.x,p.y);
+      hint= ofatStep(rd)===3? "The room has used its 6 runs." : ofatStep(rd)===1? `Click the map to run an experiment for the room (acid only, at ${OFAT_T} °C).` : `Room: acid fixed at ${fA(ofatBestX(rd))}. Click to pick a temperature.`; }
+    else if(ph==="free"){ const runs=[]; [...ids,"room"].forEach(id=>huntDoc(id).free.forEach(p=>runs.push(p))); const rd=huntDoc("room");
+      mapOpts={world:W1,runs,big:true,labels:runs.length<=40,aria:"Everyone's free-hunt runs"}; click=p=>runFree("room",p.x,p.y);
+      hint= rd.free.length>=FREE_RUNS? "The room has used its 6 runs." : `Click the map to run an experiment for the room (${FREE_RUNS-rd.free.length} left).`; }
+    else { const o=app.overlay, runs=[], paths=[];
+      if(o.runs) [...ids,"room"].forEach(id=>{ const d=huntDoc(id); [...d.ofat,...d.free].forEach(p=>runs.push(p)); });
+      if(o.ofat) paths.push({pts:REF.ofatPath,color:css("--accent-ink"),connect:true,dash:[6,5]});
+      if(o.fact) paths.push({pts:REF.fact,color:css("--ink"),shape:"sq"});
+      if(o.bo) paths.push({pts:REF.bo,color:css("--accent"),connect:true,shape:"di",numbers:true});
+      mapOpts={world:W1,surface:true,runs,paths,opt:true,aria:"The true yield map with strategies"}; }
+    left=h("div",{class:"mapbox"}, mapEl(mapOpts,click), legend(hint));
+  }
+  const nav=navPanel(idx>0?()=>setState(x=>x.hunt.phase=PHASES[idx-1]):null,
+    idx<3?()=>setState(x=>x.hunt.phase=PHASES[idx+1]):()=>setState(x=>{x.tab="enzyme";x.enz={phase:"intro"};}),
+    ["Start round 1","Start round 2","Reveal the map","Start part 2"][idx], idx<3?"accent":"");
+  const side=h("div",{class:"side"},nav);
+  if(ph==="lobby") side.append(linkPanel(ids));
+  if(ph==="ofat") side.append(boardPanel(ids,"ofat",2*OFAT_RUNS,W1));
+  if(ph==="free") side.append(boardPanel(ids,"free",FREE_RUNS,W1));
+  if(ph==="reveal") side.append(revealPanel(ids));
+  return stage(info,left,side);
+}
+function resetRow(){
+  if(!app.confirmReset) return h("button",{class:"btn ghost",onclick:()=>{app.confirmReset=true;render();}},"New game (clears all answers)");
+  return h("div",{class:"row"}, h("button",{class:"btn danger",onclick:()=>{ app.confirmReset=false; app.joined=null; setState(x=>{ const d=defaultState(); x.session=d.session; x.hunt=d.hunt; x.enz=d.enz; x.quiz=d.quiz; x.tab="hunt"; }); }},"Yes, clear everything"),
+    h("button",{class:"btn ghost",onclick:()=>{app.confirmReset=false;render();}},"Cancel"));
+}
+function joinPanel(ids){
+  const s=S(), url=s.joinUrl||"";
+  const p=h("div",{class:"panel lobby"},h("span",{class:"label"},"Join on your phone"));
+  if(app.mode!=="live"){
+    if(url){ const qrBox=h("div",{class:"qr"}); try{ if(typeof qrcode==="function"){ const q=qrcode(0,"M"); q.addData(url); q.make(); qrBox.innerHTML=q.createSvgTag(6,2); } else qrBox.remove(); }catch(e){ qrBox.remove(); }
+      p.append(h("h2",{},"Scan to play along"),qrBox,h("p",{class:"link"},url),h("p",{class:"hint"},"Everyone plays on their own phone at their own pace. This screen is for the room's runs and the reveals.")); }
+    else p.append(h("h2",{},"Play together on this screen"),h("p",{},"People shout out settings and you click the map for the room."));
+    return p; }
+  if(url){ const qrBox=h("div",{class:"qr"}); try{ if(typeof qrcode==="function"){ const q=qrcode(0,"M"); q.addData(url); q.make(); qrBox.innerHTML=q.createSvgTag(6,2); } else qrBox.remove(); }catch(e){ qrBox.remove(); }
+    p.append(h("h2",{},"Scan to join"),qrBox,h("p",{class:"link"},url)); }
+  else p.append(h("h2",{},"Open this page on your phone"),h("p",{class:"hint"},"Add the share link on the right to show a QR code here."));
+  if(ids.length) p.append(h("div",{class:"names"},ids.slice(0,60).map(id=>h("span",{},nameOf(id)))));
+  return p;
+}
+function linkPanel(ids){
+  const s=S(), url=s.joinUrl||"";
+  if(app.mode!=="live") return h("div",{class:"panel"},h("span",{class:"label"},"How to play"),h("p",{},"Round 1: the room picks 3 acid amounts at 115 °C, then 3 temperatures. Round 2: 6 runs anywhere. Round 3: a new enzyme reaction, with a model to help. Click the map to run each experiment."));
+  const inp=h("input",{id:"joinUrl",type:"url",value:url,placeholder:"Paste the share link of this page"});
+  return h("div",{class:"panel"},h("span",{class:"label"},"Room"),
+    h("div",{class:"stats"},h("div",{class:"stat"},h("b",{},String(ids.length)),h("span",{},"phones joined"))),
+    h("div",{class:"field"},h("label",{for:"joinUrl",class:"hint"},"Link behind the QR code"),inp,h("button",{class:"btn ghost",onclick:()=>setState(x=>x.joinUrl=inp.value.trim())},"Update link")));
+}
+function boardPanel(ids,key,total,W){
+  const rows=[...ids,"room"].map(id=>{ const d=huntDoc(id)[key]; return d.length?{id,b:bestOf(d),n:d.length}:null; }).filter(Boolean).sort((a,b)=>b.b.v-a.b.v);
+  const runs=rows.reduce((a,r)=>a+r.n,0), done=rows.filter(r=>r.n>=total&&r.id!=="room").length;
+  const p=h("div",{class:"panel"},h("span",{class:"label"},"Best yield so far"),
+    h("div",{class:"stats"},h("div",{class:"stat"},h("b",{},String(runs)),h("span",{},"experiments run")),app.mode==="live"?h("div",{class:"stat"},h("b",{},`${done}/${ids.length}`),h("span",{},"phones finished")):null));
+  if(!rows.length) p.append(h("p",{class:"empty"},"No runs yet."));
+  else p.append(h("ol",{class:"board"},rows.slice(0,8).map((r,i)=>h("li",{},h("span",{class:"rk"},String(i+1)),h("span",{class:"nm"},nameOf(r.id),h("small",{},`${fX(W,r.b.x)} · ${fY(W,r.b.y)}`)),h("span",{class:"vl"},pct(r.b.v))))));
+  return p;
+}
+function toggle(obj,k,label,color){ return h("label",{class:"tog"},h("input",{type:"checkbox",checked:obj[k]?true:null,onchange:e=>{obj[k]=e.target.checked;render();}}),h("i",{class:"sw",style:`background:${color}`}),label); }
+function cmpTable(rows,W,hl){
+  return h("div",{class:"panel"},h("span",{class:"label"},"Strategies compared"),
+    h("div",{style:"overflow-x:auto"},h("table",{class:"cmp"},h("thead",{},h("tr",{},h("th",{},"Strategy"),h("th",{style:"text-align:right"},"Runs"),h("th",{style:"text-align:right"},"Best"))),
+      h("tbody",{}, rows.map(r=>h("tr",{class:r[0]===hl?"hl":null},h("td",{},r[0]),h("td",{class:"n"},r[1]),h("td",{class:"n"},r[2]==null?"—":pct(r[2])))),
+        h("tr",{class:"hl"},h("td",{},"True optimum ★"),h("td",{class:"n"},`${fX(W,W.opt.x)}, ${fY(W,W.opt.y)}`),h("td",{class:"n"},pct(W.opt.v)))))),
+    h("p",{class:"hint"},"Reference strategies use the noise-free surface. Yields come from a toy model, not lab data."));
+}
+function revealPanel(ids){
+  const o=app.overlay;
+  const P=h("div",{class:"panel"},h("span",{class:"label"},"Show on the map"),h("div",{class:"toggles"},
+    toggle(o,"runs","Everyone's runs","var(--muted)"), toggle(o,"ofat","Textbook one-factor-at-a-time (9 runs)","var(--accent-ink)"),
+    toggle(o,"fact","2² factorial + centre (5 runs)","var(--ink)"), toggle(o,"bo","+ Bayesian optimization (preview of part 2)","var(--accent)")));
+  const ofatB=[...ids,"room"].map(id=>huntDoc(id).ofat).filter(a=>a.length).map(a=>bestOf(a).v);
+  const freeB=[...ids,"room"].map(id=>huntDoc(id).free).filter(a=>a.length).map(a=>bestOf(a).v);
+  const T=cmpTable([
+    ["Room, one factor at a time (typical)","6 each",median(ofatB)],
+    ["Room, free hunt (typical)","6 each",median(freeB)],
+    ["Room, free hunt (best phone)","6",freeB.length?Math.max(...freeB):null],
+    ["Textbook one factor at a time",String(REF.ofat.length),bestOf(REF.ofat).v],
+    ["2² factorial + centre","5",bestOf(REF.fact).v],
+    ["Factorial + Bayesian optimization","10",Math.max(bestOf(REF.fact).v,bestOf(REF.bo).v)]],W1,"Factorial + Bayesian optimization");
+  return h("div",{style:"display:flex;flex-direction:column;gap:18px"},P,T);
+}
+
+/* ===== presenter: round 3, enzyme in flow ===== */
+const EPH=["intro","play","reveal"];
+const EINFO={
+  intro:{eye:"Part 2 · A new reaction",t:"Enzyme in flow",p:"An immobilised enzyme in a packed-bed reactor. Factors: residence time, 1 to 30 min, and temperature, 20 to 70 °C. Everyone starts from the same 5 runs: a 2² factorial plus a centre point. Where would you go next? Mark your guess."},
+  play:{eye:"Part 2 · Round 3",t:`${ENZ_RUNS} runs, with a model`,p:"The colour is the model's best guess; faded means unsure. The dashed ring is where expected improvement is highest. Follow it, or overrule it."},
+  reveal:{eye:"Part 2 · The answer",t:"The enzyme map",p:"The best region is a curved band inside the box: hotter needs shorter, longer needs cooler. No corner comes close, but the centre point pointed the way."}
+};
+function presEnz(){
+  const s=S(), ph=s.enz.phase, idx=EPH.indexOf(ph), ids=players(); ensureNames(ids);
+  let mapOpts, click=null, hint="";
+  const start={pts:REF.start,color:css("--ink"),shape:"sq",fill:true,labels:true};
+  if(ph==="intro"){ const gs=[]; ids.forEach(id=>{ const g=huntDoc(id).guess; if(g) gs.push({...g,color:css("--accent-ink")}); });
+    const rg=huntDoc("room").guess; if(rg) gs.push({...rg,big:true,label:"the room",color:css("--accent")});
+    mapOpts={world:W2,paths:[start],guesses:gs,aria:"The 5 starting runs and everyone's guesses"}; click=p=>setGuess("room",p);
+    hint= app.mode==="live" ? `${gs.length-(rg?1:0)} guesses from phones. Click to mark the room's guess.` : "Ask the room where they would go next, then click to mark it."; }
+  else if(ph==="play"){ const rd=huntDoc("room"), runs=[]; ids.forEach(id=>huntDoc(id).enz.forEach(p=>runs.push(p)));
+    rd.enz.forEach(p=>runs.push({...p,own:true}));
+    const model=enzModelRuns(rd);
+    mapOpts={world:W2,model,paths:[start],runs,guesses:rd.guess&&!rd.enz.length?[{...rd.guess,big:true,label:"the room's guess",color:css("--accent-ink")}]:[],big:true,labels:runs.length<=30,suggest:rd.enz.length<ENZ_RUNS?suggest(W2,model):null,aria:"The room's model with everyone's runs"};
+    click=p=>runEnz("room",p.x,p.y);
+    hint= rd.enz.length>=ENZ_RUNS? "The room has used its 4 runs." : `Model built from the 5 starting runs and the room's runs. Click to run for the room (${ENZ_RUNS-rd.enz.length} left).`; }
+  else { const o=app.overlay2, runs=[], paths=[];
+    if(o.runs) [...ids,"room"].forEach(id=>huntDoc(id).enz.forEach(p=>runs.push(p)));
+    if(o.start) paths.push({...start,fill:false,labels:false});
+    if(o.bo) paths.push({pts:REF.bo2,color:css("--accent"),connect:true,shape:"di",numbers:true});
+    mapOpts={world:W2,surface:true,runs,paths,opt:true,aria:"The true enzyme map"}; }
+  const left=h("div",{class:"mapbox"}, mapEl(mapOpts,click), legend(hint));
+  const nav=navPanel(()=>setState(x=>{ if(idx>0) x.enz.phase=EPH[idx-1]; else { x.tab="hunt"; x.hunt.phase="reveal"; } }),
+    idx<2?()=>setState(x=>x.enz.phase=EPH[idx+1]):()=>setState(x=>x.tab="quiz"),
+    ["Start round 3","Reveal the map","Go to the quiz"][idx], idx<2?"accent":"");
+  const side=h("div",{class:"side"},nav);
+  if(ph==="intro"){ const c=REF.start, corners=c.slice(0,4).map(p=>p.v);
+    side.append(h("div",{class:"panel"},h("span",{class:"label"},"What do the 5 runs say?"),
+      h("div",{class:"stats"},h("div",{class:"stat"},h("b",{},Math.round(Math.max(...corners))+" %"),h("span",{},"best corner")),h("div",{class:"stat"},h("b",{},Math.round(c[4].v)+" %"),h("span",{},"centre point"))),
+      h("p",{},"Every corner is poor and the centre is far better: the surface curves, and the optimum is somewhere inside the box. Where exactly? That's what the model is for."))); }
+  if(ph==="play") side.append(boardPanel(ids,"enz",ENZ_RUNS,W2));
+  if(ph==="reveal"){ const o=app.overlay2;
+    const P=h("div",{class:"panel"},h("span",{class:"label"},"Show on the map"),h("div",{class:"toggles"},
+      toggle(o,"runs","Everyone's runs","var(--muted)"), toggle(o,"start","The 5 starting runs","var(--ink)"), toggle(o,"bo",`Following the suggestion every time (${ENZ_RUNS} runs)`,"var(--accent)")));
+    const eB=[...ids,"room"].map(id=>huntDoc(id).enz).filter(a=>a.length).map(a=>bestOf(a).v);
+    side.append(P, cmpTable([
+      ["Starting design (2² + centre)","5",bestOf(REF.start).v],
+      ["Room, with the model (typical)",`5 + ${ENZ_RUNS}`,median(eB)],
+      ["Room, with the model (best phone)",`5 + ${ENZ_RUNS}`,eB.length?Math.max(...eB):null],
+      ["Always following the suggestion",`5 + ${ENZ_RUNS}`,Math.max(bestOf(REF.start).v,bestOf(REF.bo2).v)]],W2,"Always following the suggestion")); }
+  return stage(EINFO[ph],left,side);
+}
+
+/* ===== presenter: quiz ===== */
+function tally(qi){ const c=[0,0,0,0]; let n=0; quizPlayers().forEach(id=>{ const a=quizDoc(id).a[qi]; if(a!=null&&a>=0&&a<4){c[a]++;n++;} }); return {c,n}; }
+function scores(){ return quizPlayers().map(id=>{ const a=quizDoc(id).a; let s=0; QUIZ.forEach((q,i)=>{ if(a[i]===q.c) s++; }); return {id,s}; }).sort((a,b)=>b.s-a.s); }
+function presQuiz(){
+  const s=S(), qi=s.quiz.q, N=QUIZ.length;
+  const prog=h("div",{class:"progress"},QUIZ.map((_,i)=>h("i",{class:i<=qi?"on":null})));
+  const ctrl=h("div",{class:"qbar"},h("span",{class:"sp"},prog));
+  if(qi<0){
+    ctrl.append(h("button",{class:"btn accent",onclick:()=>setState(x=>{x.quiz.q=0;x.quiz.reveal=false;})},"Show question 1"));
+    return h("section",{class:"qstage"},h("div",{class:"stage-head"},h("span",{class:"eyebrow"},"Part 2 · Last exercise"),h("h1",{},`Quiz · ${N} questions`),
+      h("p",{},app.mode==="live"?"Answer on your phone. You can change your answer until the presenter reveals it.":"Vote by show of hands, then reveal the answer.")),ctrl,
+      h("div",{class:"row"},resetRow()));
+  }
+  if(qi>=N){
+    ctrl.append(h("button",{class:"btn ghost",onclick:()=>setState(x=>{x.quiz.q=N-1;x.quiz.reveal=true;})},"Back"));
+    const sc=scores(); ensureNames(sc.map(r=>r.id));
+    return h("section",{class:"qstage"},h("div",{class:"stage-head"},h("span",{class:"eyebrow"},"Final scores"),h("h1",{},"Who made it stick?")),
+      sc.length?h("div",{class:"panel",style:"max-width:720px"},h("ol",{class:"board"},sc.slice(0,10).map((r,i)=>h("li",{},h("span",{class:"rk"},String(i+1)),h("span",{class:"nm"},nameOf(r.id)),h("span",{class:"vl"},`${r.s}/${N}`))))):
+        h("p",{class:"empty"},"No phone answers this time."), ctrl);
+  }
+  const Q=QUIZ[qi], rv=s.quiz.reveal, t=tally(qi), mx=Math.max(1,...t.c);
+  ctrl.append(
+    h("span",{class:"chip"},`${t.n} ${t.n===1?"answer":"answers"}`),
+    h("button",{class:"btn ghost",onclick:()=>setState(x=>{ if(x.quiz.reveal) x.quiz.reveal=false; else {x.quiz.q=qi-1; x.quiz.reveal=qi-1>=0;} })},"Back"),
+    rv? h("button",{class:"btn accent",onclick:()=>setState(x=>{x.quiz.q=qi+1;x.quiz.reveal=false;})},qi+1<N?`Question ${qi+2}`:"Final scores")
+      : h("button",{class:"btn accent",onclick:()=>setState(x=>x.quiz.reveal=true)},"Reveal the answer"));
+  const opts=h("div",{class:"opts"},Q.o.map((txt,i)=>{
+    const cls="opt"+(rv?(i===Q.c?" correct":" wrong"):"");
+    return h("div",{class:cls},h("span",{class:"bar",style:`width:${rv?Math.round(100*t.c[i]/mx):0}%`}),h("span",{class:"lt"},LET[i]),h("span",{},txt),h("span",{class:"ct"},rv&&app.mode==="live"?String(t.c[i]):""));
+  }));
+  return h("section",{class:"qstage"},
+    h("div",{class:"stage-head"},h("span",{class:"eyebrow"},`Question ${qi+1} of ${N}`)),
+    h("p",{class:"qtext"},Q.q), opts, rv?h("p",{class:"explain"},Q.e):null, ctrl);
+}
+
+/* ===== phone ===== */
+function playerView(){
+  const s=S(), wrap=h("div",{class:"phone"});
+  if(!app.uid){ wrap.append(h("div",{class:"card"},h("h2",{},"You're watching"),h("p",{},"This page can't identify you, so you can't submit answers here. Follow along on the big screen."))); return wrap; }
+  if(app.stateMissing){ wrap.append(h("div",{class:"card wait"},h("i",{class:"pulse"}),h("h2",{},"Waiting for the presenter"),h("p",{},"The game starts as soon as the presenter opens it."))); return wrap; }
+  wrap.append(s.tab==="quiz"?phoneQuiz():s.tab==="enzyme"?phoneEnz():phoneHunt());
+  if(app.mode==="solo") wrap.append(selfNav());
+  return wrap;
+}
+/* self-paced steps when phones can't sync */
+function stepIdx(s){ if(s.tab==="hunt") return Math.max(0,["lobby","ofat","free","reveal"].indexOf(s.hunt.phase)); if(s.tab==="enzyme") return 4+Math.max(0,["intro","play","reveal"].indexOf(s.enz.phase)); return 7+Math.min(QUIZ.length,s.quiz.q+1); }
+function goStep(i){ app.sel=null; setState(x=>{ if(i<4){x.tab="hunt";x.hunt.phase=["lobby","ofat","free","reveal"][i];} else if(i<7){x.tab="enzyme";x.enz={phase:["intro","play","reveal"][i-4]};} else {x.tab="quiz";x.quiz={q:i-8,reveal:false};} }); try{ window.scrollTo(0,0); }catch(e){} }
+function stepName(i){ const N=QUIZ.length; return i===0?"Start":i===1?"Round 1":i===2?"Round 2":i===3?"See the map":i===4?"Part 2":i===5?"Start round 3":i===6?"See the map":i===7?"Quiz":i<8+N?`Question ${i-7}`:"Final score"; }
+function selfNav(){
+  const i=stepIdx(S()), last=8+QUIZ.length;
+  const row=h("div",{class:"row"});
+  if(i>0) row.append(h("button",{class:"btn ghost",onclick:()=>goStep(i-1)},"Back"));
+  if(i<last) row.append(h("button",{class:"btn accent",onclick:()=>goStep(i+1)},`Next: ${stepName(i+1)}`));
+  else row.append(h("button",{class:"btn ghost",onclick:()=>{ app.hunt={}; app.quiz={}; const d=defaultState(); app.state=d; saveLocal(); render(true); }},"Play again"));
+  return row;
+}
+function runsList(W,arr){ const b=arr.length?bestOf(arr):null; return h("ol",{class:"runs"},arr.map((r,i)=>h("li",{class:r===b?"best":null},h("span",{class:"i"},String(i+1)),h("span",{class:"c"},`${fX(W,r.x)} · ${fY(W,r.y)}`),h("span",{class:"v"},pct(r.v))))); }
+function sliderEl(id,label,min,max,step,val,fmt,onv){
+  const out=h("b",{},fmt(val)); const inp=h("input",{id,type:"range",min,max,step,value:val,"aria-label":label});
+  inp.addEventListener("input",()=>{ onv(+inp.value); out.textContent=fmt(+inp.value); });
+  return h("div",{class:"slider"},h("div",{class:"rd"},h("label",{for:id},label),out),inp);
+}
+function stepsBar(done,total){ return h("div",{class:"steps"},[...Array(total)].map((_,i)=>h("i",{class:i<done?"done":(i===done?"now":null)}))); }
+function phoneHunt(){
+  const s=S(), ph=s.hunt.phase, d=huntDoc(app.uid), card=h("div",{class:"card"});
+  if(ph==="lobby"){ card.classList.add("wait"); card.append(h("span",{class:"eyebrow"},"Part 1"),h("h2",{},"You're in"),h("p",{},"Your job: find the conditions with the highest yield. Two rounds now, one more after the Bayesian part of the talk. "+(app.mode==="live"?"Watch the big screen.":"Play at your own pace and tap Next to start.")),...(app.mode==="live"?[h("i",{class:"pulse"})]:[])); return card; }
+  if(ph==="ofat"){
+    const st=ofatStep(d);
+    card.append(h("span",{class:"eyebrow"},"Round 1 · One factor at a time"), stepsBar(d.ofat.length,2*OFAT_RUNS));
+    if(st===1){ card.append(h("h2",{},"Change the acid only"), h("p",{class:"fixed"},`Temperature is fixed at ${OFAT_T} °C.`),
+        sliderEl("sa","Acid",0.1,3.0,0.1,app.slider.a,v=>v.toFixed(1)+" eq",v=>app.slider.a=v),
+        h("button",{class:"btn accent block",onclick:()=>runOfat(app.uid,cx(W1,app.slider.a),cy(W1,OFAT_T))},`Run experiment (${OFAT_RUNS-d.ofat.length} left)`)); }
+    else if(st===2){ const bx=ofatBestX(d);
+      card.append(h("h2",{},"Now change the temperature"), h("p",{class:"fixed"},`Acid is fixed at your best so far: ${fA(bx)}.`),
+        sliderEl("st","Temperature",100,160,5,app.slider.t,v=>v+" °C",v=>app.slider.t=v),
+        h("button",{class:"btn accent block",onclick:()=>runOfat(app.uid,bx,cy(W1,app.slider.t))},`Run experiment (${2*OFAT_RUNS-d.ofat.length} left)`)); }
+    else { const b=bestOf(d.ofat); card.append(h("h2",{},"Round 1 done"),h("div",{class:"big"},h("b",{},pct(b.v)),h("span",{},"your best")),h("p",{},`at ${fA(b.x)} and ${fT(b.y)}. Does it feel like the top? ${app.mode==="live"?"Wait for round 2.":"Tap Next for round 2."}`)); }
+    if(d.ofat.length){ card.append(runsList(W1,d.ofat)); card.append(mapEl({world:W1,runs:d.ofat.map(p=>({...p,own:true})),lines:[{y:cy(W1,OFAT_T)}].concat(st>=2?[{x:ofatBestX(d)}]:[]),labels:true,ratio:0.75,aria:"Your round 1 runs"})); }
+    return card;
+  }
+  if(ph==="free"){
+    const left=FREE_RUNS-d.free.length;
+    card.append(h("span",{class:"eyebrow"},"Round 2 · Free hunt"), stepsBar(d.free.length,FREE_RUNS));
+    if(left>0){
+      const sel=app.sel;
+      card.append(h("h2",{},"Tap the map, then run"),
+        mapEl({world:W1,runs:d.free.map(p=>({...p,own:true})),sel,labels:true,big:true,ratio:0.8,aria:"Tap to choose acid and temperature"},p=>{app.sel=p;render();}),
+        h("p",{class:"fixed"},sel?`Selected: ${fA(sel.x)} · ${fT(sel.y)}`:"Nothing selected yet. Tap anywhere on the map."),
+        h("button",{class:"btn accent block",disabled:sel?null:true,onclick:()=>{ if(app.sel){ runFree(app.uid,app.sel.x,app.sel.y); app.sel=null; } }},`Run experiment (${left} left)`));
+    } else { const b=bestOf(d.free); card.append(h("h2",{},"Round 2 done"),h("div",{class:"big"},h("b",{},pct(b.v)),h("span",{},"your best")),h("p",{},app.mode==="live"?"Wait for the reveal on the big screen.":"Tap Next to see the real map."),
+      mapEl({world:W1,runs:d.free.map(p=>({...p,own:true})),labels:true,ratio:0.8,aria:"Your round 2 runs"})); }
+    if(d.free.length) card.append(runsList(W1,d.free));
+    return card;
+  }
+  const all=[...d.ofat,...d.free], b=all.length?bestOf(all):null;
+  card.append(h("span",{class:"eyebrow"},"The hidden map"),h("h2",{},`The top is ${pct(W1.opt.v)}`),
+    h("p",{},`at ${fA(W1.opt.x)} and ${fT(W1.opt.y)}, on a diagonal ridge.`+(b?` Your best: ${pct(b.v)}.`:"")),
+    h("p",{class:"fixed"},app.mode==="live"?"That's part 1. Keep this page open: part 2 starts after the Bayesian section of the talk.":"That's part 1. Keep this page open and tap Next when the talk reaches part 2."),
+    mapEl({world:W1,surface:true,runs:all.map(p=>({...p,own:true})),opt:true,ratio:0.8,aria:"True yield map with your runs"}), legend());
+  return card;
+}
+function phoneEnz(){
+  const s=S(), ph=s.enz.phase, d=huntDoc(app.uid), card=h("div",{class:"card"});
+  const start={pts:REF.start,color:css("--ink"),shape:"sq",fill:true,labels:true};
+  if(ph==="intro"){ const g=d.guess;
+    card.append(h("span",{class:"eyebrow"},"Part 2 · Enzyme in flow"),h("h2",{},"Where would you go next?"),
+      h("p",{},"A new reaction: an immobilised enzyme in a packed-bed flow reactor. You set residence time (1–30 min) and temperature (20–70 °C). These 5 runs are already done. Every corner is poor, the centre is much better."),
+      mapEl({world:W2,paths:[start],guesses:g?[{...g,big:true,label:"your guess"}]:[],ratio:0.8,aria:"The 5 starting runs: tap to mark your guess"},p=>setGuess(app.uid,p)),
+      h("p",{class:"fixed"}, g ? `Your guess: ${fX(W2,g.x)} · ${fY(W2,g.y)}. `+(app.mode==="live"?"Tap again to move it. Next, the model makes its own suggestion.":"Tap again to move it, or tap Next to see what the model suggests.")
+                              : "Tap the map to mark where you would run the next experiment.")); return card; }
+  if(ph==="play"){
+    const left=ENZ_RUNS-d.enz.length, model=enzModelRuns(d), sug=left>0?suggest(W2,model):null, sel=app.sel;
+    card.append(h("span",{class:"eyebrow"},"Part 2 · Round 3 · With a model"), stepsBar(d.enz.length,ENZ_RUNS));
+    if(left>0){
+      card.append(h("h2",{},"Follow the model, or overrule it"),
+        mapEl({world:W2,model,paths:[start],runs:d.enz.map(p=>({...p,own:true})),guesses:d.guess&&!d.enz.length?[{...d.guess,label:"your guess",color:css("--muted")}]:[],labels:true,big:true,suggest:sug,sel,ratio:0.8,aria:"Model map: tap to choose residence time and temperature"},p=>{app.sel=p;render();}),
+        ...(d.guess&&!d.enz.length?[h("p",{},`You guessed ${fX(W2,d.guess.x)} · ${fY(W2,d.guess.y)}. The model suggests ${fX(W2,sug.x)} · ${fY(W2,sug.y)}. Who's right?`)]:[]),
+        h("p",{class:"hint"},"Colour: the model's best guess. Faded: unsure. Dashed ring: highest expected improvement."),
+        h("p",{class:"fixed"},sel?`Selected: ${fX(W2,sel.x)} · ${fY(W2,sel.y)}`:`Suggested: ${fX(W2,sug.x)} · ${fY(W2,sug.y)}`),
+        h("div",{class:"row"},
+          h("button",{class:"btn ghost",onclick:()=>{ runEnz(app.uid,sug.x,sug.y); app.sel=null; }},"Run the suggestion"),
+          h("button",{class:"btn accent",disabled:sel?null:true,onclick:()=>{ if(app.sel){ runEnz(app.uid,app.sel.x,app.sel.y); app.sel=null; } }},`Run my pick (${left} left)`)));
+    } else { const b=bestOf(d.enz); card.append(h("h2",{},"Round 3 done"),h("div",{class:"big"},h("b",{},pct(b.v)),h("span",{},"your best")),h("p",{},app.mode==="live"?"Wait for the reveal on the big screen.":"Tap Next to see the real map."),
+      mapEl({world:W2,model,paths:[start],runs:d.enz.map(p=>({...p,own:true})),labels:true,ratio:0.8,aria:"Your round 3 runs on the model"})); }
+    if(d.enz.length) card.append(runsList(W2,d.enz));
+    return card;
+  }
+  const b=d.enz.length?bestOf(d.enz):null;
+  card.append(h("span",{class:"eyebrow"},"The enzyme map"),h("h2",{},`The top is ${pct(W2.opt.v)}`),
+    h("p",{},`at ${fX(W2,W2.opt.x)} and ${fY(W2,W2.opt.y)}, on a curved band inside the box.`+(b?` Your best: ${pct(b.v)}.`:"")),
+    mapEl({world:W2,surface:true,paths:[{...start,fill:false,labels:false}],runs:d.enz.map(p=>({...p,own:true})),guesses:d.guess?[{...d.guess,label:"your guess",color:css("--muted")}]:[],opt:true,ratio:0.8,aria:"True enzyme map with your runs"}), legend());
+  return card;
+}
+function phoneQuiz(){
+  const s=S(), qi=s.quiz.q, N=QUIZ.length, card=h("div",{class:"card"});
+  if(qi<0){ card.classList.add("wait"); card.append(h("span",{class:"eyebrow"},"Part 2 · Quiz"),h("h2",{},"Get ready"),h("p",{},app.mode==="live"?`${N} questions. Pick an answer on your phone; you can change it until the answer is revealed.`:`${N} questions. The answer shows as soon as you pick.`),...(app.mode==="live"?[h("i",{class:"pulse"})]:[])); return card; }
+  const my=quizDoc(app.uid);
+  if(qi>=N){ let sc=0; QUIZ.forEach((q,i)=>{ if(my.a[i]===q.c) sc++; }); card.append(h("span",{class:"eyebrow"},"Quiz done"),h("h2",{},"Your score"),h("div",{class:"big"},h("b",{},`${sc}/${N}`)),h("p",{},"Thanks for playing.")); return card; }
+  const Q=QUIZ[qi], mine=my.a[qi], rv=app.mode==="live"?s.quiz.reveal:mine!=null;
+  card.append(h("span",{class:"eyebrow"},`Question ${qi+1} of ${N}`),h("h2",{},Q.q),
+    h("div",{class:"pick"},Q.o.map((t,i)=>h("button",{class:"opt"+(rv?(i===Q.c?" correct":(i===mine?" wrong":"")):""),"aria-pressed":String(mine===i),disabled:rv?true:null,
+      onclick:()=>{ const a={...my.a}; a[qi]=i; saveQuiz(app.uid,{a}); }},h("span",{class:"lt"},LET[i]),h("span",{},t),h("span",{})))));
+  if(rv){ card.append(h("p",{class:"result "+(mine===Q.c?"ok":"no")},mine==null?"No answer this time.":(mine===Q.c?"Correct.":`Not quite. The answer is ${LET[Q.c]}.`)),h("p",{},Q.e)); }
+  else card.append(h("p",{class:"hint"},mine==null?"Tap an answer.":"Answer saved. You can still change it."));
+  return card;
+}
+
+/* ---------- boot ---------- */
+function redraw(){ app.lastKey=""; render(true); }
+window.addEventListener("resize",()=>{ clearTimeout(redraw._t); redraw._t=setTimeout(()=>document.querySelectorAll("canvas.map").forEach(cv=>cv._o&&drawMap(cv,cv._o)),120); });
+try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redraw); }catch(e){}
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+async function boot(){
+  render(true);
+  const use=n=>(window.claude&&typeof window.claude.use==="function")?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+  const [db,user]=await Promise.all([use("db"),use("user")]);
+  app.user=user;
+  if(user){ try{ app.canEdit=await user.canEdit(); app.uid=await user.id(); }catch(e){} }
+  if(!db){ app.mode="solo"; app.uid="me"; try{ app.narrow=matchMedia("(max-width: 700px)").matches; }catch(e){} app.state=defaultState(); loadLocal(); try{ const v=localStorage.getItem(LS+"-view"); if(v==="player"||v==="presenter") app.viewAs=v; }catch(e){} render(true); return; }
+  app.db=db; app.mode="live"; render(true);
+  db.doc("live/state").onSnapshot(snap=>{
+    if(snap.exists){ app.state=snap.data(); app.stateMissing=false; }
+    else if(app.canEdit){ if(!app.state){ app.state=defaultState(); } db.doc("live/state").set(app.state).catch(dbErr); app.stateMissing=false; }
+    else app.stateMissing=true;
+    reconcileJoin(); render();
+  },()=>{ app.mode="solo"; if(!app.state) app.state=defaultState(); render(true); });
+  db.collection("hunt").onSnapshot(qs=>{ const o={}; qs.docs.forEach(d=>{ if(d.exists) o[d.id]=d.data(); }); app.hunt=o; reconcileJoin(); render(); },()=>{});
+  db.collection("quiz").onSnapshot(qs=>{ const o={}; qs.docs.forEach(d=>{ if(d.exists) o[d.id]=d.data(); }); app.quiz=o; render(); },()=>{});
+}
+document.fonts&&document.fonts.ready.then(()=>{ document.querySelectorAll("canvas.map").forEach(cv=>cv._o&&drawMap(cv,cv._o)); });
+boot();
+})();
+</script>
+
+</body></html>
